@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BirdBridge": {
+      "commandName": "Project",
+      "commandLineArgs": "-run"
+    }
+  }
+}

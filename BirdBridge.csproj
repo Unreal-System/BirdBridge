@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-BirdBridge-51daa64b-44b8-4027-92fc-5303e287c335</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="app\**" />
+    <Content Remove="app\**" />
+    <EmbeddedResource Remove="app\**" />
+    <None Remove="app\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HttpToSocks5Proxy" Version="1.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
+	<PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="7.0.0" />
+	<PackageReference Include="System.Text.Encoding.CodePages" Version="7.0.0" />
+	<PackageReference Include="Telegram.Bot" Version="18.0.0" />
+	<PackageReference Include="Telegram.Bots.Extensions.Polling" Version="5.9.0" />
+	<PackageReference Include="TweetinviAPI" Version="5.0.4" />
+  </ItemGroup>
+</Project>
