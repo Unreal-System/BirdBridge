@@ -132,6 +132,10 @@ namespace BirdBridge
                         }
                         else
                         {
+                            var sb = new StringBuilder();
+                            sb.AppendLine("请求的原始内容尺寸超过限制(20MB)!");
+                            sb.AppendLine("以下链接是您请求推文的源链接.");
+
                             var msg = string.Empty;
                             var index = result.Tweet.Text.IndexOf("https://t.co/");
                             if (index > -1) msg = $"<a href=\"https://twitter.com/{result.Includes.Users?[0].Username}/status/{tid}\">{result.Includes.Users?[0].Name}(@{result.Includes.Users?[0].Username})</a>{Environment.NewLine}{result.Tweet.Text.Substring(0, index)}{Environment.NewLine}💖{result.Tweet.PublicMetrics.LikeCount} 🔁{result.Tweet.PublicMetrics.RetweetCount} 💬{result.Tweet.PublicMetrics.ReplyCount}";
@@ -141,35 +145,52 @@ namespace BirdBridge
                             {
                                 for (int i = 0; i < result.Includes.Media.Length; i++)
                                 {
-                                    if (result.Includes.Media[i].Type == "photo")
+                                    switch (result.Includes.Media[i].Type)
                                     {
-                                        if (mediaGroup.Count == 0) mediaGroup.Add(new InputMediaPhoto(new InputMedia(result.Includes.Media[i].Url)) { ParseMode = ParseMode.Html, Caption = msg });
-                                        else mediaGroup.Add(new InputMediaPhoto(new InputMedia(result.Includes.Media[i].Url)));
-                                    }
-                                    else if (result.Includes.Media[i].Type == "video")
-                                    {
-                                        var i4 = 0; // Bitrate
-                                        var i5 = 0;
-                                        for (int i3 = 0; i3 < result.Includes.Media[i].Variants.Length; i3++)
-                                        {
-                                            if (result.Includes.Media[i].Variants[i3].Bitrate > i4)
+                                        case "photo":
+                                            if (mediaGroup.Count == 0) mediaGroup.Add(new InputMediaPhoto(new InputMedia(result.Includes.Media[i].Url)) { ParseMode = ParseMode.Html, Caption = msg });
+                                            else mediaGroup.Add(new InputMediaPhoto(new InputMedia(result.Includes.Media[i].Url)));
+                                            sb.AppendLine(result.Includes.Media[i].Url);
+                                            break;
+                                        case "video":
+                                        case "animated_gif":
+                                            var i4 = 0; // Bitrate
+                                            var i5 = 0;
+                                            for (int i3 = 0; i3 < result.Includes.Media[i].Variants.Length; i3++)
                                             {
-                                                i4 = result.Includes.Media[i].Variants[i3].Bitrate;
-                                                i5 = i3;
+                                                if (result.Includes.Media[i].Variants[i3].Bitrate > i4)
+                                                {
+                                                    i4 = result.Includes.Media[i].Variants[i3].Bitrate;
+                                                    i5 = i3;
+                                                }
                                             }
-                                        }
-                                        if (mediaGroup.Count == 0) mediaGroup.Add(new InputMediaVideo(new InputMedia(result.Includes.Media[i].Variants[i5].URL)) { ParseMode = ParseMode.Html, Caption = msg });
-                                        else mediaGroup.Add(new InputMediaVideo(new InputMedia(result.Includes.Media[i].Variants[i5].URL)));
+                                            if (mediaGroup.Count == 0) mediaGroup.Add(new InputMediaVideo(new InputMedia(result.Includes.Media[i].Variants[i5].URL)) { ParseMode = ParseMode.Html, Caption = msg });
+                                            else mediaGroup.Add(new InputMediaVideo(new InputMedia(result.Includes.Media[i].Variants[i5].URL)));
+                                            sb.AppendLine(result.Includes.Media[i].Variants[i5].URL);
+                                            break;
+                                        default: 
+                                            break;
                                     }
                                 }
                             }
 
-                            botClient.SendMediaGroupAsync(
-                                chatId: message.Chat.Id,
-                                replyToMessageId: message.MessageId,
-                                disableNotification: true,
-                                allowSendingWithoutReply: true,
-                                media: mediaGroup.ToArray());
+                            try
+                            {
+                                _ = botClient.SendMediaGroupAsync(
+                                    chatId: message.Chat.Id,
+                                    replyToMessageId: message.MessageId,
+                                    disableNotification: true,
+                                    allowSendingWithoutReply: true,
+                                    media: mediaGroup.ToArray()).Result;
+                            }
+                            catch (Exception ex)
+                            {
+                                botClient.SendTextMessageAsync(
+                                    chatId: message.Chat.Id,
+                                    replyToMessageId: message.MessageId,
+                                    disableNotification: true,
+                                    text: sb.ToString());
+                            }
                         }
                     }
                 }
